@@ -1,15 +1,17 @@
-import React from 'react'
+// 
+"use client"
+import React, { useContext, useEffect } from 'react'
+import { signOut, useSession } from "next-auth/react";
+import Link from 'next/link'
+import { Loader2, ShoppingCartIcon, UserIcon } from 'lucide-react'
+import { Badge } from "@/components/ui/badge"
+import { CartContext } from '../Context/CartContext'
 import {
   NavigationMenu,
-  // NavigationMenuContent,
-  // NavigationMenuIndicator,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  // NavigationMenuTrigger,
-  // NavigationMenuViewport,
 } from "@/components/ui/navigation-menu"
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,104 +20,76 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import Link from 'next/link'
-import {  ShoppingCartIcon, User2Icon, UserIcon } from 'lucide-react'
-import { Badge } from "@/components/ui/badge"
-export default function navbar() {
-  return <>
-  
-  
-  <nav className=' py-3 gap-6 bg-amber-200 text-2xl font-semibold'>
 
+export default function Navbar() {
+  const { isLoading, cartData, getCart } = useContext(CartContext);
+  const session = useSession();
 
+  // ✅ تحديث الكارت لما المستخدم يكون authenticated
+  useEffect(() => {
+    if (session.status === "authenticated") {
+      getCart();
+    }
+  }, [session.status]);
 
+  return (
+    <nav className='sticky top-0 z-50 bg-gray-300 shadow py-3'>
+      <div className="container mx-auto">
+        <div className="flex items-center justify-between">
+          <h1><Link href={'/'}>ShopMart</Link></h1>
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild><Link href="/products">products</Link></NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild><Link href="/categories">categories</Link></NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild><Link href="/brands">brands</Link></NavigationMenuLink>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
 
-<div className="container mx-auto">
-  <div className="flex items-center justify-between">
+          <div className='flex items-center'>
+            {session.status == 'authenticated' && <h2 className='text-sm gap-2'>Hi {session.data?.user.name}</h2>}
 
-<h1><Link href={'/'}>ShopMart</Link>  </h1>
+            <DropdownMenu>
+              <DropdownMenuTrigger><UserIcon /></DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {session.status == 'authenticated' ? (
+                  <>
+                    <Link href={'/profile'}>
+                      <DropdownMenuItem>Profile</DropdownMenuItem>
+                    </Link>
+                    <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>Logout</DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <Link href={'/login'}>
+                      <DropdownMenuItem>Login</DropdownMenuItem>
+                    </Link>
+                    <Link href={'/register'}>
+                      <DropdownMenuItem>Register</DropdownMenuItem>
+                    </Link>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-      <NavigationMenu>
-  <NavigationMenuList>
-     <NavigationMenuItem>
-      <NavigationMenuLink asChild>
-        <Link href="/products">products</Link>
-      </NavigationMenuLink>
-    </NavigationMenuItem>
-    <NavigationMenuItem>
-      <NavigationMenuLink asChild>
-        <Link href="/categories">categories</Link>
-      </NavigationMenuLink>
-    </NavigationMenuItem>
-    <NavigationMenuItem>
-      <NavigationMenuLink asChild>
-        <Link href="/brands">brands</Link>
-      </NavigationMenuLink>
-    </NavigationMenuItem>
-  </NavigationMenuList>
-</NavigationMenu>
- <div className='flex '>
-<DropdownMenu>
-  <DropdownMenuTrigger> <UserIcon/> </DropdownMenuTrigger>
-  <DropdownMenuContent>
-    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-    <DropdownMenuSeparator />
-     <Link href={'/profile'}>
-    <DropdownMenuItem>
-     Profile
-      </DropdownMenuItem>
-      </Link>
-     <Link href={'/login'}>
-    <DropdownMenuItem>
-     login
-      </DropdownMenuItem>
-      </Link>
-       <Link href={'/register'}>
-    <DropdownMenuItem>
-     Register
-      </DropdownMenuItem>
-      </Link>
-    <DropdownMenuItem>Logout</DropdownMenuItem>
-  </DropdownMenuContent>
-</DropdownMenu>
-
-
-
-
-<div className='bg-blue-300 p-3 relative '>
-<ShoppingCartIcon/>
-<Badge className=" size-4 p-1 rounded-full flex justify-items-center  absolute top-0 end-0">
-          <span>0</span>
-        </Badge>
-</div>
-
-
-
-
-
-
- </div>
-  
- 
-  </div>
-</div>
-
-
-
-  </nav>
-  
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  </>
+            {session.status == 'authenticated' && (
+              <Link href={'/cart'} className='p-3 relative'>
+                <ShoppingCartIcon />
+                <Badge className="size-4 p-1.5 rounded-full absolute top-0 end-0">
+                  <span>{isLoading ? <Loader2 className='animate-spin' /> : cartData?.numOfCartItems}</span>
+                </Badge>
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+  )
 }
